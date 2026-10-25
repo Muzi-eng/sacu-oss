@@ -1,5 +1,7 @@
 import json, secrets
 from fastapi import FastAPI, HTTPException, Header
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional
 import httpx
@@ -22,6 +24,10 @@ class PaymentIn(BaseModel):
     method: str = "EFT"
 
 app = FastAPI(title="SACU OSS Gateway")
+
+# Mount static files for the web portal
+app.mount("/static", StaticFiles(directory="sacu_oss/oss_gateway/static"), name="static")
+
 conn = connect("GATEWAY")
 
 class AdminError(Exception):
@@ -65,6 +71,11 @@ def update(ucr, **kw):
     conn.execute(f"UPDATE gateway_declarations SET {fields}, updated=? WHERE ucr=?",
                  (*kw.values(), now(), ucr))
     conn.commit()
+
+@app.get("/")
+def root():
+    """Serve the SACU One Stop Shop web portal."""
+    return FileResponse("sacu_oss/oss_gateway/static/index.html")
 
 @app.post("/api/v1/declarations", status_code=201)
 def submit(req: DeclarationIn, idempotency_key: Optional[str] = Header(default=None)):
@@ -134,6 +145,14 @@ def clear(ucr, origin_code, dest_code):
            release_codes=json.dumps({"export": exp["release_code"],
                                      "import": imp["release_code"]}))
     return get_declaration(ucr)
+
+@app.get("/api/v1/declarations")
+def list_declarations():
+    rows = conn.execute(
+        "SELECT ucr, status, origin, destination, receipt, release_codes, created "
+        "FROM gateway_declarations ORDER BY created DESC LIMIT 50"
+    ).fetchall()
+    return [dict(r) for r in rows]
 
 @app.get("/api/v1/declarations/{ucr}")
 def get_declaration(ucr: str):
