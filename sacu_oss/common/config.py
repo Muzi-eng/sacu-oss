@@ -13,7 +13,15 @@ TARIFF = {
 }
 DEFAULT_TARIFF = (0.10, False)
 
-BORDER_POSTS = ["Ngwenya-Oshoek", "Matsapha", "Lavumisa", "Maseru-Bridge"]
+# All border posts across the three countries
+BORDER_POSTS = [
+    # Eswatini
+    "Ngwenya-Oshoek", "Matsapha", "Lavumisa",
+    # South Africa
+    "Oshoek", "Golela",
+    # Lesotho
+    "Maseru Bridge", "Caledonspoort", "Qacha's Nek"
+]
 
 API_KEY = "demo-internal-key"
 

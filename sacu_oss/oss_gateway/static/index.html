@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -179,7 +179,7 @@
         }
         .pay-option input[type="radio"]:checked + label i { color: var(--accent); }
 
-        /* PAYMENT DETAILS PANEL (shown depending on method) */
+        /* PAYMENT DETAILS PANEL */
         .payment-details {
             background: var(--light);
             border: 1px dashed var(--border);
@@ -310,7 +310,7 @@
                 <div class="form-row cols-3">
                     <div class="form-group">
                         <label>Origin</label>
-                        <select class="form-select" id="origin_country">
+                        <select class="form-select" id="origin_country" onchange="updateBorderPosts()">
                             <option value="SZ">Eswatini (SZ)</option>
                             <option value="ZA">South Africa (ZA)</option>
                             <option value="LS">Lesotho (LS)</option>
@@ -327,9 +327,7 @@
                     <div class="form-group">
                         <label>Border Post</label>
                         <select class="form-select" id="border_post">
-                            <option value="Ngwenya-Oshoek">Ngwenya-Oshoek</option>
-                            <option value="Matsapha">Matsapha</option>
-                            <option value="Lavumisa">Lavumisa</option>
+                            <!-- Populated dynamically -->
                         </select>
                     </div>
                 </div>
@@ -505,6 +503,43 @@
     <script>
         const API_BASE = "/api/v1";
 
+        // ===== BORDER POSTS BY COUNTRY =====
+        const BORDER_POSTS_BY_COUNTRY = {
+            SZ: [
+                { value: "Ngwenya-Oshoek", label: "Ngwenya-Oshoek (SZ ↔ ZA)" },
+                { value: "Matsapha",       label: "Matsapha (SZ inland)" },
+                { value: "Lavumisa",       label: "Lavumisa (SZ ↔ ZA)" }
+            ],
+            ZA: [
+                { value: "Oshoek",         label: "Oshoek (ZA ↔ SZ)" },
+                { value: "Golela",         label: "Golela (ZA ↔ SZ)" },
+                { value: "Maseru Bridge",  label: "Maseru Bridge (ZA ↔ LS)" }
+            ],
+            LS: [
+                { value: "Maseru Bridge",  label: "Maseru Bridge (LS ↔ ZA)" },
+                { value: "Caledonspoort",  label: "Caledonspoort (LS ↔ ZA)" },
+                { value: "Qacha's Nek",    label: "Qacha's Nek (LS ↔ ZA)" }
+            ]
+        };
+
+        function updateBorderPosts() {
+            const originSelect = document.getElementById('origin_country');
+            const borderSelect = document.getElementById('border_post');
+            const origin = originSelect.value;
+            const posts = BORDER_POSTS_BY_COUNTRY[origin] || [];
+            
+            borderSelect.innerHTML = '';
+            posts.forEach(post => {
+                const opt = document.createElement('option');
+                opt.value = post.value;
+                opt.textContent = post.label;
+                borderSelect.appendChild(opt);
+            });
+        }
+
+        // Run once on load
+        document.addEventListener('DOMContentLoaded', updateBorderPosts);
+
         // ===== TABS =====
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -585,7 +620,7 @@
             document.getElementById('importer_id').value = 'ZA-T001';
             document.getElementById('origin_country').value = 'SZ';
             document.getElementById('destination_country').value = 'ZA';
-            document.getElementById('border_post').value = 'Ngwenya-Oshoek';
+            updateBorderPosts();
             document.getElementById('hs_code').value = '220290';
             document.getElementById('description').value = 'Beverage syrup';
             document.getElementById('quantity').value = '25';
