@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -80,7 +80,7 @@
             overflow: hidden;
         }
 
-        /* TABS - Pure CSS */
+        /* TABS */
         .tabs { display: flex; background: var(--light); border-bottom: 2px solid var(--border); overflow-x: auto; }
         .tabs::-webkit-scrollbar { display: none; }
         .tab-btn {
@@ -310,7 +310,7 @@
                 <div class="form-row cols-3">
                     <div class="form-group">
                         <label>Origin</label>
-                        <select class="form-select" id="origin_country" onchange="updateBorderPosts()">
+                        <select class="form-select" id="origin_country" onchange="updateBorderPosts(); updateTraderIds();">
                             <option value="SZ">Eswatini (SZ)</option>
                             <option value="ZA">South Africa (ZA)</option>
                             <option value="LS">Lesotho (LS)</option>
@@ -318,7 +318,7 @@
                     </div>
                     <div class="form-group">
                         <label>Destination</label>
-                        <select class="form-select" id="destination_country">
+                        <select class="form-select" id="destination_country" onchange="updateTraderIds();">
                             <option value="ZA">South Africa (ZA)</option>
                             <option value="SZ">Eswatini (SZ)</option>
                             <option value="LS">Lesotho (LS)</option>
@@ -414,10 +414,7 @@
                         <div class="form-group">
                             <label>Bank</label>
                             <select class="form-select" id="eft_bank">
-                                <option>Standard Bank Eswatini</option>
-                                <option>Nedbank Eswatini</option>
-                                <option>First National Bank</option>
-                                <option>ABSA Eswatini</option>
+                                <!-- Populated dynamically based on Origin -->
                             </select>
                         </div>
                         <div class="form-group">
@@ -522,12 +519,37 @@
             ]
         };
 
+        // ===== BANKS BY COUNTRY =====
+        const BANKS_BY_COUNTRY = {
+            SZ: [
+                "Standard Bank Eswatini",
+                "Nedbank Eswatini",
+                "First National Bank Eswatini",
+                "Eswatini Bank",
+                "SwaziBank"
+            ],
+            ZA: [
+                "Standard Bank South Africa",
+                "Nedbank South Africa",
+                "First National Bank South Africa",
+                "ABSA South Africa",
+                "Capitec Bank",
+                "Investec"
+            ],
+            LS: [
+                "Standard Lesotho Bank",
+                "Nedbank Lesotho",
+                "First National Bank Lesotho",
+                "Lesotho PostBank"
+            ]
+        };
+
+        // ===== UPDATE BORDER POSTS + BANKS =====
         function updateBorderPosts() {
-            const originSelect = document.getElementById('origin_country');
+            const origin = document.getElementById('origin_country').value;
             const borderSelect = document.getElementById('border_post');
-            const origin = originSelect.value;
             const posts = BORDER_POSTS_BY_COUNTRY[origin] || [];
-            
+
             borderSelect.innerHTML = '';
             posts.forEach(post => {
                 const opt = document.createElement('option');
@@ -535,10 +557,38 @@
                 opt.textContent = post.label;
                 borderSelect.appendChild(opt);
             });
+
+            updateBanks();
+        }
+
+        function updateBanks() {
+            const origin = document.getElementById('origin_country').value;
+            const bankSelect = document.getElementById('eft_bank');
+            if (!bankSelect) return;
+
+            const banks = BANKS_BY_COUNTRY[origin] || [];
+            bankSelect.innerHTML = '';
+            banks.forEach(bank => {
+                const opt = document.createElement('option');
+                opt.value = bank;
+                opt.textContent = bank;
+                bankSelect.appendChild(opt);
+            });
+        }
+
+        // ===== AUTO-FILL TRADER IDS FROM ORIGIN / DESTINATION =====
+        function updateTraderIds() {
+            const origin = document.getElementById('origin_country').value;
+            const dest = document.getElementById('destination_country').value;
+            document.getElementById('exporter_id').value = origin + '-T001';
+            document.getElementById('importer_id').value = dest + '-T001';
         }
 
         // Run once on load
-        document.addEventListener('DOMContentLoaded', updateBorderPosts);
+        document.addEventListener('DOMContentLoaded', () => {
+            updateBorderPosts();
+            updateTraderIds();
+        });
 
         // ===== TABS =====
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -585,12 +635,12 @@
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             const payload = {
-                exporter_id: document.getElementById('exporter_id').value,
-                importer_id: document.getElementById('importer_id').value,
+                exporter_id: document.getElementById('exporter_id').value.trim(),
+                importer_id: document.getElementById('importer_id').value.trim(),
                 origin_country: document.getElementById('origin_country').value,
                 destination_country: document.getElementById('destination_country').value,
                 border_post: document.getElementById('border_post').value,
-                hs_code: document.getElementById('hs_code').value,
+                hs_code: document.getElementById('hs_code').value.trim(),
                 description: document.getElementById('description').value,
                 quantity: parseFloat(document.getElementById('quantity').value),
                 customs_value: parseFloat(document.getElementById('customs_value').value)
@@ -616,11 +666,10 @@
         }
 
         function resetForm() {
-            document.getElementById('exporter_id').value = 'SZ-T001';
-            document.getElementById('importer_id').value = 'ZA-T001';
             document.getElementById('origin_country').value = 'SZ';
             document.getElementById('destination_country').value = 'ZA';
             updateBorderPosts();
+            updateTraderIds();
             document.getElementById('hs_code').value = '220290';
             document.getElementById('description').value = 'Beverage syrup';
             document.getElementById('quantity').value = '25';
@@ -650,11 +699,11 @@
         async function payDeclaration() {
             const ucr = document.getElementById('ucr_input').value.trim();
             if (!ucr) return alert('Enter a UCR first');
-            
+
             // Get selected payment method
             const methodRadio = document.querySelector('input[name="payment_method"]:checked');
             const method = methodRadio ? methodRadio.value : 'EFT';
-            
+
             // Validate payment details
             if (method === 'EFT') {
                 if (!document.getElementById('eft_account').value.trim()) {
