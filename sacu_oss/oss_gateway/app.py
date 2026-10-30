@@ -25,7 +25,7 @@ class PaymentIn(BaseModel):
 
 app = FastAPI(title="SACU OSS Gateway")
 
-# Mount static files for the web portal
+# Serve static files (portal assets)
 app.mount("/static", StaticFiles(directory="sacu_oss/oss_gateway/static"), name="static")
 
 conn = connect("GATEWAY")
@@ -72,11 +72,13 @@ def update(ucr, **kw):
                  (*kw.values(), now(), ucr))
     conn.commit()
 
+# ===== ROOT: serve the web portal =====
 @app.get("/")
 def root():
     """Serve the SACU One Stop Shop web portal."""
     return FileResponse("sacu_oss/oss_gateway/static/index.html")
 
+# ===== API =====
 @app.post("/api/v1/declarations", status_code=201)
 def submit(req: DeclarationIn, idempotency_key: Optional[str] = Header(default=None)):
     if req.origin_country == req.destination_country:
