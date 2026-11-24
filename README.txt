@@ -11,6 +11,7 @@ Muzi Mncwanga         202302925         https://github.com/Muzi-eng
 Ntshingila Mzwandile  202302667         https://github.com/mzwandilentshingila
 Dlamini Sibusiso      202303067         https://github.com/Sibusiso-sd
 Mlamuli Sibandze      202305050         https://github.com/BhutiiMlamuli
+ANELE NKONYANE        202305103         https://github.com/Anele-Nele
 
 GITHUB REPOSITORY
 --------------------------------------------------------------------------------
