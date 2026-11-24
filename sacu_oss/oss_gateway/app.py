@@ -1,4 +1,4 @@
-import json, secrets
+import json, secrets, logging
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -8,24 +8,27 @@ import httpx
 from ..common.config import ADMINISTRATIONS, BORDER_POSTS, API_KEY
 from ..common.db import connect, now
 
+# Setup Gateway error logging
+logging.basicConfig(filename='gateway_errors.log', level=logging.ERROR)
+
 class DeclarationIn(BaseModel):
-    exporter_id: str
-    importer_id: str
-    origin_country: str
-    destination_country: str
-    border_post: str
-    hs_code: str
-    description: str
+    exporter_id: str = Field(..., max_length=20)
+    importer_id: str = Field(..., max_length=20)
+    origin_country: str = Field(..., min_length=2, max_length=2)
+    destination_country: str = Field(..., min_length=2, max_length=2)
+    border_post: str = Field(..., max_length=50)
+    hs_code: str = Field(..., min_length=4, max_length=10)
+    description: str = Field(..., max_length=200)
     quantity: float = Field(gt=0)
     customs_value: float = Field(gt=0)
 
 class PaymentIn(BaseModel):
-    amount: float
-    method: str = "EFT"
+    amount: float = Field(gt=0)
+    method: str = Field(default="EFT", max_length=10)
 
 app = FastAPI(title="SACU OSS Gateway")
 
-# Serve static files (portal assets)
+# Serve static files (portal)
 app.mount("/static", StaticFiles(directory="sacu_oss/oss_gateway/static"), name="static")
 
 conn = connect("GATEWAY")
@@ -41,6 +44,7 @@ def call(admin_code: str, method: str, path: str, body: dict = None):
         with httpx.Client(timeout=5.0) as c:
             r = c.request(method, url, json=body, headers={"X-API-Key": API_KEY})
     except httpx.ConnectError:
+        logging.error(f"Gateway failed to connect to {admin_code} at {url}")
         raise AdminError(502, f"{admin_code} unavailable")
     if r.status_code >= 400:
         raise AdminError(r.status_code, r.json().get("detail", "error"))
@@ -72,13 +76,10 @@ def update(ucr, **kw):
                  (*kw.values(), now(), ucr))
     conn.commit()
 
-# ===== ROOT: serve the web portal =====
 @app.get("/")
 def root():
-    """Serve the SACU One Stop Shop web portal."""
     return FileResponse("sacu_oss/oss_gateway/static/index.html")
 
-# ===== API =====
 @app.post("/api/v1/declarations", status_code=201)
 def submit(req: DeclarationIn, idempotency_key: Optional[str] = Header(default=None)):
     if req.origin_country == req.destination_country:
