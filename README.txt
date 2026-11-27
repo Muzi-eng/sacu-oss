@@ -6,13 +6,12 @@ Imports and Exports between Eswatini, South Africa and Lesotho
 
 TEAM MEMBERS
 --------------------------------------------------------------------------------
-Name                  Student Number    GitHub Profile
-Muzi Mncwanga         202302925         https://github.com/Muzi-eng
-Ntshingila Mzwandile  202302667         https://github.com/mzwandilentshingila
-Dlamini Sibusiso      202303067         https://github.com/Sibusiso-sd
-Mlamuli Sibandze      202305050         https://github.com/BhutiiMlamuli
-ANELE NKONYANE        202305103         https://github.com/Anele-Nele
-
+Name                   Student Number    GitHub Profile
+Muzi Mncwanga          202302925         https://github.com/Muzi-eng
+Mzwandile Ntshingila   202302667         https://github.com/mzwandilentshingila
+Sibusiso  Dlamini      202303067         https://github.com/Sibusiso-sd
+Mlamuli Sibandze       202305050         https://github.com/BhutiiMlamuli
+Anele Nkonyane         202305103         https://github.com/Anele-Nele 
 GITHUB REPOSITORY
 --------------------------------------------------------------------------------
 https://github.com/Muzi-eng/sacu-oss
